@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/AlexeyNilov/zero_control/internal/config"
 	"github.com/AlexeyNilov/zero_control/internal/service"
@@ -93,13 +92,12 @@ func (b *Bot) handleDefaultUpdate(_ context.Context, _ *tgbot.Bot, update *model
 	}
 
 	b.logger.Printf(
-		"received telegram message update_id=%d message_id=%d chat_id=%d user_id=%s username=%s text=%q",
+		"received telegram message update_id=%d message_id=%d chat_id=%d user_id=%s username=%s",
 		update.ID,
 		message.ID,
 		message.Chat.ID,
 		userID(message.From),
 		username(message.From),
-		normalizeText(message.Text),
 	)
 }
 
@@ -130,8 +128,4 @@ func username(user *models.User) string {
 	}
 
 	return user.Username
-}
-
-func normalizeText(text string) string {
-	return strings.TrimSpace(text)
 }

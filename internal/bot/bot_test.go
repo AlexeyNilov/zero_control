@@ -115,7 +115,8 @@ func TestDefaultHandlerLogsIncomingMessage(t *testing.T) {
 	assertContains(t, logLine, "chat_id=777")
 	assertContains(t, logLine, "user_id=55")
 	assertContains(t, logLine, "username=alice")
-	assertContains(t, logLine, "text=\"status\"")
+	assertNotContains(t, logLine, "text=")
+	assertNotContains(t, logLine, "status")
 }
 
 func TestStartHandlerRepliesWithOnlineMessage(t *testing.T) {
@@ -154,7 +155,8 @@ func TestStartHandlerRepliesWithOnlineMessage(t *testing.T) {
 
 	logLine := logs.String()
 	assertContains(t, logLine, "received telegram message")
-	assertContains(t, logLine, "text=\"/start\"")
+	assertNotContains(t, logLine, "text=")
+	assertNotContains(t, logLine, "/start")
 }
 
 type stubSender struct {
@@ -204,5 +206,13 @@ func assertContains(t *testing.T, value, want string) {
 
 	if !strings.Contains(value, want) {
 		t.Fatalf("value %q does not contain %q", value, want)
+	}
+}
+
+func assertNotContains(t *testing.T, value, unwanted string) {
+	t.Helper()
+
+	if strings.Contains(value, unwanted) {
+		t.Fatalf("value %q unexpectedly contains %q", value, unwanted)
 	}
 }
