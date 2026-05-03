@@ -22,4 +22,6 @@ This helps ensure requirements are:
 
 > **When** the bot successfully connects to the Telegram API and passes authentication during startup, **the system shall** post a startup notification to the Telegram chat identified by the `DEVELOPER_CHAT_ID` environment variable.
 
+> **When** the bot receives the `/status` command in a Telegram chat, **the system shall** reply in that chat with `zero_control is online`.
+
 > **When** the bot encounters a critical runtime failure that prevents normal operation or requires manual intervention, **the system shall** post a failure notification to the Telegram chat identified by the `DEVELOPER_CHAT_ID` environment variable.

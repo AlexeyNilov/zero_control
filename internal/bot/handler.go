@@ -13,17 +13,17 @@ type messageSender interface {
 	SendMessage(context.Context, *tgbot.SendMessageParams) (*models.Message, error)
 }
 
-func handleStart(ctx context.Context, sender messageSender, router Router, update *models.Update) error {
+func handleStatus(ctx context.Context, sender messageSender, router Router, update *models.Update) error {
 	if update == nil || update.Message == nil {
 		return nil
 	}
 
 	_, err := sender.SendMessage(ctx, &tgbot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   router.StartMessage(),
+		Text:   router.StatusMessage(),
 	})
 	if err != nil {
-		return fmt.Errorf("send /start reply to chat %s: %w", strconv.FormatInt(update.Message.Chat.ID, 10), err)
+		return fmt.Errorf("send /status reply to chat %s: %w", strconv.FormatInt(update.Message.Chat.ID, 10), err)
 	}
 
 	return nil

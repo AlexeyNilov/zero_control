@@ -119,7 +119,7 @@ func TestDefaultHandlerLogsIncomingMessage(t *testing.T) {
 	assertNotContains(t, logLine, "status")
 }
 
-func TestStartHandlerRepliesWithOnlineMessage(t *testing.T) {
+func TestStatusHandlerRepliesWithOnlineMessage(t *testing.T) {
 	sender := &stubSender{}
 	var logs bytes.Buffer
 	logger := log.New(&logs, "", 0)
@@ -129,7 +129,7 @@ func TestStartHandlerRepliesWithOnlineMessage(t *testing.T) {
 		ID: 7,
 		Message: &models.Message{
 			ID:   8,
-			Text: "/start",
+			Text: "/status",
 			Chat: models.Chat{
 				ID: 999,
 			},
@@ -140,9 +140,9 @@ func TestStartHandlerRepliesWithOnlineMessage(t *testing.T) {
 		},
 	}
 
-	err := telegramBot.handleStartCommand(context.Background(), sender, update)
+	err := telegramBot.handleStatusCommand(context.Background(), sender, update)
 	if err != nil {
-		t.Fatalf("handleStartCommand returned error: %v", err)
+		t.Fatalf("handleStatusCommand returned error: %v", err)
 	}
 
 	if sender.chatID != 999 {
@@ -156,7 +156,7 @@ func TestStartHandlerRepliesWithOnlineMessage(t *testing.T) {
 	logLine := logs.String()
 	assertContains(t, logLine, "received telegram message")
 	assertNotContains(t, logLine, "text=")
-	assertNotContains(t, logLine, "/start")
+	assertNotContains(t, logLine, "/status")
 }
 
 type stubSender struct {

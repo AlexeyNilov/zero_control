@@ -10,6 +10,6 @@ func NewRouter(control *service.ControlService) Router {
 	return Router{control: control}
 }
 
-func (r Router) StartMessage() string {
+func (r Router) StatusMessage() string {
 	return "zero_control is online"
 }

@@ -39,10 +39,10 @@ func New(cfg config.Config, logger *log.Logger, control *service.ControlService)
 			bot := &Bot{logger: logger, router: router, api: api}
 			bot.handleDefaultUpdate(ctx, api, update)
 		}),
-		tgbot.WithMessageTextHandler("/start", tgbot.MatchTypeExact, func(ctx context.Context, api *tgbot.Bot, update *models.Update) {
+		tgbot.WithMessageTextHandler("/status", tgbot.MatchTypeExact, func(ctx context.Context, api *tgbot.Bot, update *models.Update) {
 			bot := &Bot{logger: logger, router: router, api: api}
-			if err := bot.handleStartCommand(ctx, api, update); err != nil {
-				bot.logger.Printf("start handler error: %v", err)
+			if err := bot.handleStatusCommand(ctx, api, update); err != nil {
+				bot.logger.Printf("status handler error: %v", err)
 			}
 		}),
 		tgbot.WithErrorsHandler(func(err error) {
@@ -74,7 +74,7 @@ func (b *Bot) Run(ctx context.Context) error {
 }
 
 func (b *Bot) sendStartupNotification(ctx context.Context) error {
-	return b.sendDeveloperNotification(ctx, b.router.StartMessage(), "startup notification")
+	return b.sendDeveloperNotification(ctx, b.router.StatusMessage(), "startup notification")
 }
 
 func (b *Bot) sendDeveloperNotification(ctx context.Context, text, notificationType string) error {
@@ -105,9 +105,9 @@ func (b *Bot) handleDefaultUpdate(_ context.Context, _ *tgbot.Bot, update *model
 	)
 }
 
-func (b *Bot) handleStartCommand(ctx context.Context, sender messageSender, update *models.Update) error {
+func (b *Bot) handleStatusCommand(ctx context.Context, sender messageSender, update *models.Update) error {
 	b.handleDefaultUpdate(ctx, nil, update)
-	return handleStart(ctx, sender, b.router, update)
+	return handleStatus(ctx, sender, b.router, update)
 }
 
 func updateMessage(update *models.Update) *models.Message {
