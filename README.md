@@ -38,6 +38,7 @@ zero_control/
 |-- scripts/
 |   |-- build_arm.sh
 |   |-- deploy_pi.sh
+|   |-- setup_service_pi.sh
 |   `-- build_win.sh
 |-- tests/
 |   `-- integration/
@@ -58,6 +59,7 @@ zero_control/
 - `internal/app` composes the application and coordinates startup.
 - `internal/logging` centralizes logger construction.
 - `scripts/` contains repeatable build and utility scripts for local development and deployment.
+- `scripts/setup_service_pi.sh` installs and enables a `systemd` unit on the Raspberry Pi for running the bot as a service.
 - `tests/integration` is reserved for higher-level end-to-end checks once the bot starts doing real work.
 - `doc/requirements.md` captures the functional and technical requirements as they become clearer.
 - `doc/user_stories.md` records intended user-facing behavior and usage scenarios.

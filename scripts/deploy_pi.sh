@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LOCAL_FILE="${LOCAL_FILE:-$ROOT_DIR/bin/zero_control-linux-armv6}"
+LOCAL_FILE="${LOCAL_FILE:-$ROOT_DIR/bin/zero_control-linux-arm64}"
 PI_HOST="${1:-${PI_HOST:-}}"
 PI_USER="${2:-${PI_USER:-pi}}"
 PI_PATH="${3:-${PI_PATH:-/home/pi/zero_control/zero_control}}"
