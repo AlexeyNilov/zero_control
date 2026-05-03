@@ -44,3 +44,15 @@ Use a lightweight Architecture Decision Record (ADR) style:
 **Alternatives considered:** `Telego` offers broader API coverage and more control, but it is a less focused starting point for an early prototype. `go-telegram-bot-api` is popular and simple, but the notes raised a maintenance concern that makes it a weaker default choice. Using raw `net/http` would maximize transparency and minimize dependencies, but it would also add avoidable boilerplate before the project has validated its basic behavior.
 
 **Consequences:** This makes it easier to build an initial working bot quickly with a clean, modern handler-based API and minimal setup. It also keeps the early codebase small, which fits the Raspberry Pi Zero constraint and the learning goal. The trade-off is that a future migration may be needed if the project outgrows the library's abstraction or requires lower-level control or broader API coverage.
+
+### 2026-05-03: Skip automated Telegram integration testing for now
+
+**Status:** Accepted
+
+**Context:** The project is small, the current bot behavior is limited, and Telegram integration testing would require additional seams, local API fakes, or real-environment smoke checks. That work would increase setup and maintenance cost before the bot has enough critical behavior to justify it.
+
+**Decision:** Do not invest in automated Telegram integration tests at this stage. Continue relying on unit tests for local logic and on real bot usage to reveal Telegram-side integration issues.
+
+**Alternatives considered:** Adding local fake-server integration tests would improve confidence in the Telegram adapter boundary, but it would add design and test harness complexity that is disproportionate to the current project value. Running smoke tests against the real Telegram API would be closer to production, but it would introduce environment dependence, credentials handling, and flakiness.
+
+**Consequences:** This keeps the codebase and workflow simpler in the short term and avoids spending effort on infrastructure that is not yet justified. The trade-off is weaker automated coverage at the Telegram boundary, so some integration failures may only be discovered during actual bot use. This decision should be revisited if the bot starts handling more important commands or side effects.
