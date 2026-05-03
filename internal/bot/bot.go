@@ -24,11 +24,15 @@ type telegramRunner interface {
 	Start(context.Context)
 }
 
+var newTelegramRunner = func(token string, options ...tgbot.Option) (telegramRunner, error) {
+	return tgbot.New(token, options...)
+}
+
 func New(cfg config.Config, logger *log.Logger, control *service.ControlService) (*Bot, error) {
 	router := NewRouter(control)
 	httpClient := &http.Client{Timeout: cfg.PollTimeout}
 
-	client, err := tgbot.New(
+	client, err := newTelegramRunner(
 		cfg.BotToken,
 		tgbot.WithDefaultHandler(func(ctx context.Context, api *tgbot.Bot, update *models.Update) {
 			bot := &Bot{logger: logger, router: router, api: api}
@@ -48,6 +52,8 @@ func New(cfg config.Config, logger *log.Logger, control *service.ControlService)
 	if err != nil {
 		return nil, fmt.Errorf("initialize telegram bot: %w", err)
 	}
+
+	logger.Printf("telegram bot startup successful")
 
 	return &Bot{
 		logger: logger,

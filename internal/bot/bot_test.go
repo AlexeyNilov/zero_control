@@ -6,10 +6,36 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/AlexeyNilov/zero_control/internal/config"
 	tgbot "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
+
+func TestNewLogsSuccessfulStartup(t *testing.T) {
+	originalNewTelegramRunner := newTelegramRunner
+	t.Cleanup(func() {
+		newTelegramRunner = originalNewTelegramRunner
+	})
+
+	newTelegramRunner = func(_ string, _ ...tgbot.Option) (telegramRunner, error) {
+		return stubRunner{}, nil
+	}
+
+	var logs bytes.Buffer
+	logger := log.New(&logs, "", 0)
+
+	_, err := New(config.Config{
+		BotToken:    "token",
+		PollTimeout: time.Second,
+	}, logger, nil)
+	if err != nil {
+		t.Fatalf("New returned error: %v", err)
+	}
+
+	assertContains(t, logs.String(), "telegram bot startup successful")
+}
 
 func TestDefaultHandlerLogsIncomingMessage(t *testing.T) {
 	var logs bytes.Buffer
@@ -86,6 +112,10 @@ type stubSender struct {
 	chatID int64
 	text   string
 }
+
+type stubRunner struct{}
+
+func (stubRunner) Start(context.Context) {}
 
 func (s *stubSender) SendMessage(_ context.Context, params *tgbot.SendMessageParams) (*models.Message, error) {
 	chatID, ok := params.ChatID.(int64)
