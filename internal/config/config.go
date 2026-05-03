@@ -1,0 +1,82 @@
+package config
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+)
+
+const defaultPollTimeout = 30 * time.Second
+
+type Config struct {
+	BotToken    string
+	PollTimeout time.Duration
+}
+
+func Load(dir string) (Config, error) {
+	values, err := readDotEnv(filepath.Join(dir, ".env"))
+	if err != nil {
+		return Config{}, err
+	}
+
+	token := firstNonEmpty(os.Getenv("BOT_TOKEN"), values["BOT_TOKEN"])
+	if token == "" {
+		return Config{}, errors.New("BOT_TOKEN is required")
+	}
+
+	return Config{
+		BotToken:    token,
+		PollTimeout: defaultPollTimeout,
+	}, nil
+}
+
+func readDotEnv(path string) (map[string]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return map[string]string{}, nil
+		}
+		return nil, fmt.Errorf("read .env: %w", err)
+	}
+
+	return parseEnv(string(data))
+}
+
+func parseEnv(data string) (map[string]string, error) {
+	values := make(map[string]string)
+
+	for lineNumber, line := range strings.Split(data, "\n") {
+		if err := parseLine(values, line, lineNumber+1); err != nil {
+			return nil, err
+		}
+	}
+
+	return values, nil
+}
+
+func parseLine(values map[string]string, raw string, lineNumber int) error {
+	line := strings.TrimSpace(raw)
+	if line == "" || strings.HasPrefix(line, "#") {
+		return nil
+	}
+
+	key, value, ok := strings.Cut(line, "=")
+	if !ok {
+		return fmt.Errorf(".env line %d: invalid format", lineNumber)
+	}
+
+	values[strings.TrimSpace(key)] = strings.TrimSpace(value)
+	return nil
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
