@@ -1,2 +1,2 @@
-* Write description
+
 * Gather requirements

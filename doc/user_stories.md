@@ -23,9 +23,11 @@ This captures:
 
 > **As a** device owner, **I want** the bot to run reliably on a Raspberry Pi Zero **so that** I can keep the system small, inexpensive, and energy-efficient.
 
-> **As a** bot developer, **I want** the bot to start with minimal setup **so that** I can deploy and recover it without a complicated maintenance process.
-
 > **As a** device owner, **I want** the bot to use modest CPU and memory resources **so that** it remains practical to run on constrained hardware.
+
+> **As a** developer, **I want** the bot to start with minimal setup **so that** I can deploy and recover it without a complicated maintenance process.
+
+> **As a** developer, **I want** to keep the bot token in a local `.env` file **so that** sensitive configuration stays out of the codebase and can be managed per environment.
 
 > **As a** developer, **I want** the codebase to stay simple and readable **so that** I can refresh my Go skills while building a real project.
 

@@ -32,3 +32,15 @@ Use a lightweight Architecture Decision Record (ADR) style:
 ```
 
 ## Actual decisions
+
+### 2026-05-03: Use `go-telegram/bot` as the initial Telegram library
+
+**Status:** Accepted
+
+**Context:** The project needs a Go library for building a Telegram bot that can run on a Raspberry Pi Zero. At this stage, the main goal is to start with a small, understandable implementation that supports learning, rapid iteration, and low operational complexity. The library comparison in `doc/notes/go_telegram_bot_libraries.md` showed several viable options, but they differ mainly in abstraction level, completeness, and ergonomics rather than core capability.
+
+**Decision:** Start implementation with `go-telegram/bot` as the primary Telegram Bot API library.
+
+**Alternatives considered:** `Telego` offers broader API coverage and more control, but it is a less focused starting point for an early prototype. `go-telegram-bot-api` is popular and simple, but the notes raised a maintenance concern that makes it a weaker default choice. Using raw `net/http` would maximize transparency and minimize dependencies, but it would also add avoidable boilerplate before the project has validated its basic behavior.
+
+**Consequences:** This makes it easier to build an initial working bot quickly with a clean, modern handler-based API and minimal setup. It also keeps the early codebase small, which fits the Raspberry Pi Zero constraint and the learning goal. The trade-off is that a future migration may be needed if the project outgrows the library's abstraction or requires lower-level control or broader API coverage.
