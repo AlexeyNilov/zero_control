@@ -31,6 +31,7 @@ go.work.sum
 # cache and mod files
 .gocache/
 .gomodcache/
+.gopath/
 
 # Editor/IDE
 # .idea/

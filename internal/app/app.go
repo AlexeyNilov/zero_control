@@ -14,12 +14,15 @@ type App struct {
 	bot *bot.Bot
 }
 
-func New(cfg config.Config, logger *log.Logger) *App {
+func New(cfg config.Config, logger *log.Logger) (*App, error) {
 	deviceService := device.New()
 	controlService := service.New(deviceService)
-	telegramBot := bot.New(cfg, logger, controlService)
+	telegramBot, err := bot.New(cfg, logger, controlService)
+	if err != nil {
+		return nil, err
+	}
 
-	return &App{bot: telegramBot}
+	return &App{bot: telegramBot}, nil
 }
 
 func (a *App) Run(ctx context.Context) error {

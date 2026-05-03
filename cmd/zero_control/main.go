@@ -18,7 +18,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	application := app.New(cfg, logger)
+	application, err := app.New(cfg, logger)
+	if err != nil {
+		logger.Printf("application setup error: %v", err)
+		os.Exit(1)
+	}
+
 	if err := application.Run(context.Background()); err != nil {
 		logger.Printf("application error: %v", err)
 		os.Exit(1)

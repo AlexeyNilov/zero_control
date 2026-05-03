@@ -2,27 +2,111 @@ package bot
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/AlexeyNilov/zero_control/internal/config"
 	"github.com/AlexeyNilov/zero_control/internal/service"
+	tgbot "github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type Bot struct {
-	logger  *log.Logger
-	router  Router
-	timeout string
+	logger *log.Logger
+	router Router
+	api    telegramRunner
 }
 
-func New(cfg config.Config, logger *log.Logger, control *service.ControlService) *Bot {
-	return &Bot{
-		logger:  logger,
-		router:  NewRouter(control),
-		timeout: cfg.PollTimeout.String(),
+type telegramRunner interface {
+	Start(context.Context)
+}
+
+func New(cfg config.Config, logger *log.Logger, control *service.ControlService) (*Bot, error) {
+	router := NewRouter(control)
+	httpClient := &http.Client{Timeout: cfg.PollTimeout}
+
+	client, err := tgbot.New(
+		cfg.BotToken,
+		tgbot.WithDefaultHandler(func(ctx context.Context, api *tgbot.Bot, update *models.Update) {
+			bot := &Bot{logger: logger, router: router, api: api}
+			bot.handleDefaultUpdate(ctx, api, update)
+		}),
+		tgbot.WithMessageTextHandler("/start", tgbot.MatchTypeExact, func(ctx context.Context, api *tgbot.Bot, update *models.Update) {
+			bot := &Bot{logger: logger, router: router, api: api}
+			if err := bot.handleStartCommand(ctx, api, update); err != nil {
+				bot.logger.Printf("start handler error: %v", err)
+			}
+		}),
+		tgbot.WithErrorsHandler(func(err error) {
+			logger.Printf("telegram bot error: %v", err)
+		}),
+		tgbot.WithHTTPClient(cfg.PollTimeout, httpClient),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("initialize telegram bot: %w", err)
 	}
+
+	return &Bot{
+		logger: logger,
+		router: router,
+		api:    client,
+	}, nil
 }
 
-func (b *Bot) Run(context.Context) error {
-	b.logger.Printf("bot skeleton initialized with poll timeout %s", b.timeout)
+func (b *Bot) Run(ctx context.Context) error {
+	b.api.Start(ctx)
 	return nil
+}
+
+func (b *Bot) handleDefaultUpdate(_ context.Context, _ *tgbot.Bot, update *models.Update) {
+	message := updateMessage(update)
+	if message == nil {
+		return
+	}
+
+	b.logger.Printf(
+		"received telegram message update_id=%d message_id=%d chat_id=%d user_id=%s username=%s text=%q",
+		update.ID,
+		message.ID,
+		message.Chat.ID,
+		userID(message.From),
+		username(message.From),
+		normalizeText(message.Text),
+	)
+}
+
+func (b *Bot) handleStartCommand(ctx context.Context, sender messageSender, update *models.Update) error {
+	b.handleDefaultUpdate(ctx, nil, update)
+	return handleStart(ctx, sender, b.router, update)
+}
+
+func updateMessage(update *models.Update) *models.Message {
+	if update == nil {
+		return nil
+	}
+
+	return update.Message
+}
+
+func userID(user *models.User) string {
+	if user == nil {
+		return "unknown"
+	}
+
+	return strconv.FormatInt(user.ID, 10)
+}
+
+func username(user *models.User) string {
+	if user == nil || user.Username == "" {
+		return "-"
+	}
+
+	return user.Username
+}
+
+func normalizeText(text string) string {
+	return strings.TrimSpace(text)
 }

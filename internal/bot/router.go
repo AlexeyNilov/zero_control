@@ -9,3 +9,7 @@ type Router struct {
 func NewRouter(control *service.ControlService) Router {
 	return Router{control: control}
 }
+
+func (r Router) StartMessage() string {
+	return "zero_control is online"
+}

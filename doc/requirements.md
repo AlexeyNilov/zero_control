@@ -13,3 +13,5 @@ This helps ensure requirements are:
 * Action-specific
 
 ## Actual requirements
+
+> **When** the bot receives a message in a Telegram chat, **the system shall** write a log entry for that message.
