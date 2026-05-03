@@ -24,6 +24,10 @@ zero_control/
 |   |-- device/
 |   |-- logging/
 |   `-- service/
+|-- scripts/
+|   |-- build_arm.sh
+|   |-- deploy_pi.sh
+|   `-- build_win.sh
 |-- tests/
 |   `-- integration/
 |-- .env.sample
@@ -42,6 +46,7 @@ zero_control/
 - `internal/device` is reserved for Raspberry Pi and OS-facing operations.
 - `internal/app` composes the application and coordinates startup.
 - `internal/logging` centralizes logger construction.
+- `scripts/` contains repeatable build and utility scripts for local development and deployment.
 - `tests/integration` is reserved for higher-level end-to-end checks once the bot starts doing real work.
 - `doc/requirements.md` captures the functional and technical requirements as they become clearer.
 - `doc/user_stories.md` records intended user-facing behavior and usage scenarios.
