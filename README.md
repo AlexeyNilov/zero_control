@@ -8,6 +8,7 @@ At its core, this project is about constraint as a design tool. A tiny machine, 
 
 The bot now uses a real `go-telegram/bot` polling adapter behind `internal/bot`.
 
+- On startup, after Telegram authentication succeeds, the bot logs successful startup and posts `zero_control is online` to the chat identified by `DEVELOPER_CHAT_ID`.
 - Incoming Telegram messages are logged with message, chat, and sender details.
 - The `/start` command replies with `zero_control is online`.
 - Device control remains a separate boundary and is still not connected to Telegram commands yet.
@@ -48,7 +49,7 @@ zero_control/
 ```
 
 - `cmd/zero_control/main.go` is the application entry point and keeps startup wiring out of the business logic.
-- `internal/config` loads and validates runtime configuration such as the bot token.
+- `internal/config` loads and validates runtime configuration such as the bot token and developer chat ID.
 - `internal/bot` holds the Telegram polling adapter, handlers, routing, and middleware.
 - `internal/service` contains application use cases and orchestration logic.
 - `internal/device` is reserved for Raspberry Pi and OS-facing operations.

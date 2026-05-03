@@ -10,7 +10,7 @@ import (
 
 func TestLoadReadsBotTokenFromDotEnvFile(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\n")
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\n")
 
 	cfg, err := config.Load(dir)
 	if err != nil {
@@ -20,14 +20,39 @@ func TestLoadReadsBotTokenFromDotEnvFile(t *testing.T) {
 	if cfg.BotToken != "test-token" {
 		t.Fatalf("BotToken = %q, want %q", cfg.BotToken, "test-token")
 	}
+
+	if cfg.DeveloperChatID != 12345 {
+		t.Fatalf("DeveloperChatID = %d, want %d", cfg.DeveloperChatID, 12345)
+	}
 }
 
 func TestLoadReturnsErrorWhenBotTokenIsMissing(t *testing.T) {
 	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".env"), "DEVELOPER_CHAT_ID=12345\n")
 
 	_, err := config.Load(dir)
 	if err == nil {
 		t.Fatal("Load returned nil error, want missing token error")
+	}
+}
+
+func TestLoadReturnsErrorWhenDeveloperChatIDIsMissing(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\n")
+
+	_, err := config.Load(dir)
+	if err == nil {
+		t.Fatal("Load returned nil error, want missing developer chat id error")
+	}
+}
+
+func TestLoadReturnsErrorWhenDeveloperChatIDIsInvalid(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=abc\n")
+
+	_, err := config.Load(dir)
+	if err == nil {
+		t.Fatal("Load returned nil error, want invalid developer chat id error")
 	}
 }
 

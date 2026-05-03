@@ -3,6 +3,7 @@ package bot
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ func TestNewLogsSuccessfulStartup(t *testing.T) {
 	})
 
 	newTelegramRunner = func(_ string, _ ...tgbot.Option) (telegramRunner, error) {
-		return stubRunner{}, nil
+		return &stubRunner{}, nil
 	}
 
 	var logs bytes.Buffer
@@ -35,6 +36,54 @@ func TestNewLogsSuccessfulStartup(t *testing.T) {
 	}
 
 	assertContains(t, logs.String(), "telegram bot startup successful")
+}
+
+func TestRunSendsStartupGreetingToDeveloperChat(t *testing.T) {
+	runner := &stubRunner{}
+	telegramBot := &Bot{
+		logger: log.New(&bytes.Buffer{}, "", 0),
+		router: NewRouter(nil),
+		api:    runner,
+		startupChatID: 12345,
+	}
+
+	err := telegramBot.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if runner.started != 1 {
+		t.Fatalf("Start calls = %d, want %d", runner.started, 1)
+	}
+
+	if runner.chatID != 12345 {
+		t.Fatalf("chatID = %d, want %d", runner.chatID, 12345)
+	}
+
+	if runner.text != "zero_control is online" {
+		t.Fatalf("text = %q, want %q", runner.text, "zero_control is online")
+	}
+}
+
+func TestRunReturnsErrorWhenStartupGreetingCannotBeSent(t *testing.T) {
+	runner := &stubRunner{sendErr: errors.New("send failed")}
+	telegramBot := &Bot{
+		logger: log.New(&bytes.Buffer{}, "", 0),
+		router: NewRouter(nil),
+		api:    runner,
+		startupChatID: 12345,
+	}
+
+	err := telegramBot.Run(context.Background())
+	if err == nil {
+		t.Fatal("Run returned nil error, want startup greeting error")
+	}
+
+	assertContains(t, err.Error(), "send startup greeting")
+
+	if runner.started != 0 {
+		t.Fatalf("Start calls = %d, want %d", runner.started, 0)
+	}
 }
 
 func TestDefaultHandlerLogsIncomingMessage(t *testing.T) {
@@ -113,9 +162,31 @@ type stubSender struct {
 	text   string
 }
 
-type stubRunner struct{}
+type stubRunner struct {
+	started int
+	chatID  int64
+	text    string
+	sendErr error
+}
 
-func (stubRunner) Start(context.Context) {}
+func (s *stubRunner) Start(context.Context) {
+	s.started++
+}
+
+func (s *stubRunner) SendMessage(_ context.Context, params *tgbot.SendMessageParams) (*models.Message, error) {
+	if s.sendErr != nil {
+		return nil, s.sendErr
+	}
+
+	chatID, ok := params.ChatID.(int64)
+	if !ok {
+		return nil, tgbot.ErrorForbidden
+	}
+
+	s.chatID = chatID
+	s.text = params.Text
+	return &models.Message{}, nil
+}
 
 func (s *stubSender) SendMessage(_ context.Context, params *tgbot.SendMessageParams) (*models.Message, error) {
 	chatID, ok := params.ChatID.(int64)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -12,8 +13,9 @@ import (
 const defaultPollTimeout = 30 * time.Second
 
 type Config struct {
-	BotToken    string
-	PollTimeout time.Duration
+	BotToken        string
+	DeveloperChatID int64
+	PollTimeout     time.Duration
 }
 
 func Load(dir string) (Config, error) {
@@ -27,10 +29,29 @@ func Load(dir string) (Config, error) {
 		return Config{}, errors.New("BOT_TOKEN is required")
 	}
 
+	developerChatID, err := parseChatID(firstNonEmpty(os.Getenv("DEVELOPER_CHAT_ID"), values["DEVELOPER_CHAT_ID"]))
+	if err != nil {
+		return Config{}, err
+	}
+
 	return Config{
-		BotToken:    token,
-		PollTimeout: defaultPollTimeout,
+		BotToken:        token,
+		DeveloperChatID: developerChatID,
+		PollTimeout:     defaultPollTimeout,
 	}, nil
+}
+
+func parseChatID(value string) (int64, error) {
+	if value == "" {
+		return 0, errors.New("DEVELOPER_CHAT_ID is required")
+	}
+
+	chatID, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("DEVELOPER_CHAT_ID must be a valid integer: %w", err)
+	}
+
+	return chatID, nil
 }
 
 func readDotEnv(path string) (map[string]string, error) {

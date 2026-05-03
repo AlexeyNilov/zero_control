@@ -15,13 +15,15 @@ import (
 )
 
 type Bot struct {
-	logger *log.Logger
-	router Router
-	api    telegramRunner
+	logger        *log.Logger
+	router        Router
+	api           telegramRunner
+	startupChatID int64
 }
 
 type telegramRunner interface {
 	Start(context.Context)
+	SendMessage(context.Context, *tgbot.SendMessageParams) (*models.Message, error)
 }
 
 var newTelegramRunner = func(token string, options ...tgbot.Option) (telegramRunner, error) {
@@ -56,14 +58,31 @@ func New(cfg config.Config, logger *log.Logger, control *service.ControlService)
 	logger.Printf("telegram bot startup successful")
 
 	return &Bot{
-		logger: logger,
-		router: router,
-		api:    client,
+		logger:        logger,
+		router:        router,
+		api:           client,
+		startupChatID: cfg.DeveloperChatID,
 	}, nil
 }
 
 func (b *Bot) Run(ctx context.Context) error {
+	if err := b.sendStartupGreeting(ctx); err != nil {
+		return err
+	}
+
 	b.api.Start(ctx)
+	return nil
+}
+
+func (b *Bot) sendStartupGreeting(ctx context.Context) error {
+	_, err := b.api.SendMessage(ctx, &tgbot.SendMessageParams{
+		ChatID: b.startupChatID,
+		Text:   b.router.StartMessage(),
+	})
+	if err != nil {
+		return fmt.Errorf("send startup greeting to chat %s: %w", strconv.FormatInt(b.startupChatID, 10), err)
+	}
+
 	return nil
 }
 
