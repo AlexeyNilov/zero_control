@@ -14,5 +14,6 @@ export GOARM=6
 export CGO_ENABLED=0
 
 go build -o "$OUTPUT_FILE" ./cmd/zero_control
+ls -lh "$OUTPUT_FILE"
 
 printf 'Built %s\n' "$OUTPUT_FILE"
