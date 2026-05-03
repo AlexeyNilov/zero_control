@@ -38,13 +38,13 @@ func TestNewLogsSuccessfulStartup(t *testing.T) {
 	assertContains(t, logs.String(), "telegram bot startup successful")
 }
 
-func TestRunSendsStartupGreetingToDeveloperChat(t *testing.T) {
+func TestRunSendsStartupNotificationToDeveloperChat(t *testing.T) {
 	runner := &stubRunner{}
 	telegramBot := &Bot{
 		logger: log.New(&bytes.Buffer{}, "", 0),
 		router: NewRouter(nil),
 		api:    runner,
-		startupChatID: 12345,
+		developerChatID: 12345,
 	}
 
 	err := telegramBot.Run(context.Background())
@@ -65,21 +65,21 @@ func TestRunSendsStartupGreetingToDeveloperChat(t *testing.T) {
 	}
 }
 
-func TestRunReturnsErrorWhenStartupGreetingCannotBeSent(t *testing.T) {
+func TestRunReturnsErrorWhenStartupNotificationCannotBeSent(t *testing.T) {
 	runner := &stubRunner{sendErr: errors.New("send failed")}
 	telegramBot := &Bot{
 		logger: log.New(&bytes.Buffer{}, "", 0),
 		router: NewRouter(nil),
 		api:    runner,
-		startupChatID: 12345,
+		developerChatID: 12345,
 	}
 
 	err := telegramBot.Run(context.Background())
 	if err == nil {
-		t.Fatal("Run returned nil error, want startup greeting error")
+		t.Fatal("Run returned nil error, want startup notification error")
 	}
 
-	assertContains(t, err.Error(), "send startup greeting")
+	assertContains(t, err.Error(), "send startup notification")
 
 	if runner.started != 0 {
 		t.Fatalf("Start calls = %d, want %d", runner.started, 0)

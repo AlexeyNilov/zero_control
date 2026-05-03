@@ -18,4 +18,8 @@ This helps ensure requirements are:
 
 > **When** the bot successfully connects to the Telegram API and passes authentication during startup, **the system shall** write a log entry indicating successful startup.
 
-> **When** the bot successfully connects to the Telegram API and passes authentication during startup, **the system shall** post a greeting message to the Telegram chat identified by the `DEVELOPER_CHAT_ID` environment variable.
+> **While** the bot is running, **when** an operational event requires developer attention, **the system shall** post a notification to the Telegram chat identified by the `DEVELOPER_CHAT_ID` environment variable.
+
+> **When** the bot successfully connects to the Telegram API and passes authentication during startup, **the system shall** post a startup notification to the Telegram chat identified by the `DEVELOPER_CHAT_ID` environment variable.
+
+> **When** the bot encounters a critical runtime failure that prevents normal operation or requires manual intervention, **the system shall** post a failure notification to the Telegram chat identified by the `DEVELOPER_CHAT_ID` environment variable.

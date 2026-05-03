@@ -14,10 +14,10 @@ import (
 )
 
 type Bot struct {
-	logger        *log.Logger
-	router        Router
-	api           telegramRunner
-	startupChatID int64
+	logger          *log.Logger
+	router          Router
+	api             telegramRunner
+	developerChatID int64
 }
 
 type telegramRunner interface {
@@ -57,15 +57,15 @@ func New(cfg config.Config, logger *log.Logger, control *service.ControlService)
 	logger.Printf("telegram bot startup successful")
 
 	return &Bot{
-		logger:        logger,
-		router:        router,
-		api:           client,
-		startupChatID: cfg.DeveloperChatID,
+		logger:          logger,
+		router:          router,
+		api:             client,
+		developerChatID: cfg.DeveloperChatID,
 	}, nil
 }
 
 func (b *Bot) Run(ctx context.Context) error {
-	if err := b.sendStartupGreeting(ctx); err != nil {
+	if err := b.sendStartupNotification(ctx); err != nil {
 		return err
 	}
 
@@ -73,13 +73,17 @@ func (b *Bot) Run(ctx context.Context) error {
 	return nil
 }
 
-func (b *Bot) sendStartupGreeting(ctx context.Context) error {
+func (b *Bot) sendStartupNotification(ctx context.Context) error {
+	return b.sendDeveloperNotification(ctx, b.router.StartMessage(), "startup notification")
+}
+
+func (b *Bot) sendDeveloperNotification(ctx context.Context, text, notificationType string) error {
 	_, err := b.api.SendMessage(ctx, &tgbot.SendMessageParams{
-		ChatID: b.startupChatID,
-		Text:   b.router.StartMessage(),
+		ChatID: b.developerChatID,
+		Text:   text,
 	})
 	if err != nil {
-		return fmt.Errorf("send startup greeting to chat %s: %w", strconv.FormatInt(b.startupChatID, 10), err)
+		return fmt.Errorf("send %s to chat %s: %w", notificationType, strconv.FormatInt(b.developerChatID, 10), err)
 	}
 
 	return nil
