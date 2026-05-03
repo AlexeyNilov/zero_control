@@ -15,6 +15,7 @@ const defaultPollTimeout = 30 * time.Second
 type Config struct {
 	BotToken        string
 	DeveloperChatID int64
+	AuthorizedIDs   map[int64]struct{}
 	PollTimeout     time.Duration
 }
 
@@ -34,9 +35,15 @@ func Load(dir string) (Config, error) {
 		return Config{}, err
 	}
 
+	authorizedIDs, err := parseAuthorizedIDs(firstNonEmpty(os.Getenv("AUTHORIZED_IDS"), values["AUTHORIZED_IDS"]))
+	if err != nil {
+		return Config{}, err
+	}
+
 	return Config{
 		BotToken:        token,
 		DeveloperChatID: developerChatID,
+		AuthorizedIDs:   authorizedIDs,
 		PollTimeout:     defaultPollTimeout,
 	}, nil
 }
@@ -52,6 +59,38 @@ func parseChatID(value string) (int64, error) {
 	}
 
 	return chatID, nil
+}
+
+func parseAuthorizedIDs(value string) (map[int64]struct{}, error) {
+	if value == "" {
+		return nil, errors.New("AUTHORIZED_IDS is required")
+	}
+
+	ids := make(map[int64]struct{})
+	for _, field := range strings.Split(value, ",") {
+		id, err := parseAuthorizedID(field)
+		if err != nil {
+			return nil, err
+		}
+
+		ids[id] = struct{}{}
+	}
+
+	return ids, nil
+}
+
+func parseAuthorizedID(value string) (int64, error) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return 0, errors.New("AUTHORIZED_IDS must contain only valid integers")
+	}
+
+	id, err := strconv.ParseInt(trimmed, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("AUTHORIZED_IDS must contain only valid integers: %w", err)
+	}
+
+	return id, nil
 }
 
 func readDotEnv(path string) (map[string]string, error) {

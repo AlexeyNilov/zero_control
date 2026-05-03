@@ -18,6 +18,7 @@ type Bot struct {
 	router          Router
 	api             telegramRunner
 	developerChatID int64
+	authorizedIDs   map[int64]struct{}
 }
 
 type telegramRunner interface {
@@ -36,11 +37,21 @@ func New(cfg config.Config, logger *log.Logger, control *service.ControlService)
 	client, err := newTelegramRunner(
 		cfg.BotToken,
 		tgbot.WithDefaultHandler(func(ctx context.Context, api *tgbot.Bot, update *models.Update) {
-			bot := &Bot{logger: logger, router: router, api: api}
+			bot := &Bot{
+				logger:        logger,
+				router:        router,
+				api:           api,
+				authorizedIDs: cfg.AuthorizedIDs,
+			}
 			bot.handleDefaultUpdate(ctx, api, update)
 		}),
 		tgbot.WithMessageTextHandler("/status", tgbot.MatchTypeExact, func(ctx context.Context, api *tgbot.Bot, update *models.Update) {
-			bot := &Bot{logger: logger, router: router, api: api}
+			bot := &Bot{
+				logger:        logger,
+				router:        router,
+				api:           api,
+				authorizedIDs: cfg.AuthorizedIDs,
+			}
 			if err := bot.handleStatusCommand(ctx, api, update); err != nil {
 				bot.logger.Printf("status handler error: %v", err)
 			}
@@ -61,6 +72,7 @@ func New(cfg config.Config, logger *log.Logger, control *service.ControlService)
 		router:          router,
 		api:             client,
 		developerChatID: cfg.DeveloperChatID,
+		authorizedIDs:   cfg.AuthorizedIDs,
 	}, nil
 }
 
@@ -91,7 +103,7 @@ func (b *Bot) sendDeveloperNotification(ctx context.Context, text, notificationT
 
 func (b *Bot) handleDefaultUpdate(_ context.Context, _ *tgbot.Bot, update *models.Update) {
 	message := updateMessage(update)
-	if message == nil {
+	if message == nil || !b.isAuthorized(message.From) {
 		return
 	}
 
@@ -106,8 +118,22 @@ func (b *Bot) handleDefaultUpdate(_ context.Context, _ *tgbot.Bot, update *model
 }
 
 func (b *Bot) handleStatusCommand(ctx context.Context, sender messageSender, update *models.Update) error {
+	message := updateMessage(update)
+	if message == nil || !b.isAuthorized(message.From) {
+		return nil
+	}
+
 	b.handleDefaultUpdate(ctx, nil, update)
 	return handleStatus(ctx, sender, b.router, update)
+}
+
+func (b *Bot) isAuthorized(user *models.User) bool {
+	if user == nil {
+		return false
+	}
+
+	_, ok := b.authorizedIDs[user.ID]
+	return ok
 }
 
 func updateMessage(update *models.Update) *models.Message {

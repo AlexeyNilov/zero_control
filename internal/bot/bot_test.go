@@ -28,8 +28,9 @@ func TestNewLogsSuccessfulStartup(t *testing.T) {
 	logger := log.New(&logs, "", 0)
 
 	_, err := New(config.Config{
-		BotToken:    "token",
-		PollTimeout: time.Second,
+		BotToken:      "token",
+		AuthorizedIDs: map[int64]struct{}{55: {}},
+		PollTimeout:   time.Second,
 	}, logger, nil)
 	if err != nil {
 		t.Fatalf("New returned error: %v", err)
@@ -41,9 +42,9 @@ func TestNewLogsSuccessfulStartup(t *testing.T) {
 func TestRunSendsStartupNotificationToDeveloperChat(t *testing.T) {
 	runner := &stubRunner{}
 	telegramBot := &Bot{
-		logger: log.New(&bytes.Buffer{}, "", 0),
-		router: NewRouter(nil),
-		api:    runner,
+		logger:          log.New(&bytes.Buffer{}, "", 0),
+		router:          NewRouter(nil),
+		api:             runner,
 		developerChatID: 12345,
 	}
 
@@ -68,9 +69,9 @@ func TestRunSendsStartupNotificationToDeveloperChat(t *testing.T) {
 func TestRunReturnsErrorWhenStartupNotificationCannotBeSent(t *testing.T) {
 	runner := &stubRunner{sendErr: errors.New("send failed")}
 	telegramBot := &Bot{
-		logger: log.New(&bytes.Buffer{}, "", 0),
-		router: NewRouter(nil),
-		api:    runner,
+		logger:          log.New(&bytes.Buffer{}, "", 0),
+		router:          NewRouter(nil),
+		api:             runner,
 		developerChatID: 12345,
 	}
 
@@ -89,7 +90,10 @@ func TestRunReturnsErrorWhenStartupNotificationCannotBeSent(t *testing.T) {
 func TestDefaultHandlerLogsIncomingMessage(t *testing.T) {
 	var logs bytes.Buffer
 	logger := log.New(&logs, "", 0)
-	telegramBot := &Bot{logger: logger}
+	telegramBot := &Bot{
+		logger:        logger,
+		authorizedIDs: map[int64]struct{}{55: {}},
+	}
 
 	update := &models.Update{
 		ID: 42,
@@ -119,11 +123,42 @@ func TestDefaultHandlerLogsIncomingMessage(t *testing.T) {
 	assertNotContains(t, logLine, "status")
 }
 
+func TestDefaultHandlerIgnoresUnauthorizedMessage(t *testing.T) {
+	var logs bytes.Buffer
+	logger := log.New(&logs, "", 0)
+	telegramBot := &Bot{
+		logger:        logger,
+		authorizedIDs: map[int64]struct{}{99: {}},
+	}
+
+	update := &models.Update{
+		ID: 42,
+		Message: &models.Message{
+			ID:   15,
+			Chat: models.Chat{ID: 777},
+			From: &models.User{
+				ID:       55,
+				Username: "alice",
+			},
+		},
+	}
+
+	telegramBot.handleDefaultUpdate(context.Background(), nil, update)
+
+	if logs.Len() != 0 {
+		t.Fatalf("logs = %q, want empty log output", logs.String())
+	}
+}
+
 func TestStatusHandlerRepliesWithOnlineMessage(t *testing.T) {
 	sender := &stubSender{}
 	var logs bytes.Buffer
 	logger := log.New(&logs, "", 0)
-	telegramBot := &Bot{logger: logger, router: NewRouter(nil)}
+	telegramBot := &Bot{
+		logger:        logger,
+		router:        NewRouter(nil),
+		authorizedIDs: map[int64]struct{}{111: {}},
+	}
 
 	update := &models.Update{
 		ID: 7,
@@ -157,6 +192,43 @@ func TestStatusHandlerRepliesWithOnlineMessage(t *testing.T) {
 	assertContains(t, logLine, "received telegram message")
 	assertNotContains(t, logLine, "text=")
 	assertNotContains(t, logLine, "/status")
+}
+
+func TestStatusHandlerIgnoresUnauthorizedMessage(t *testing.T) {
+	sender := &stubSender{}
+	var logs bytes.Buffer
+	logger := log.New(&logs, "", 0)
+	telegramBot := &Bot{
+		logger:        logger,
+		router:        NewRouter(nil),
+		authorizedIDs: map[int64]struct{}{222: {}},
+	}
+
+	update := &models.Update{
+		ID: 7,
+		Message: &models.Message{
+			ID:   8,
+			Text: "/status",
+			Chat: models.Chat{ID: 999},
+			From: &models.User{
+				ID:       111,
+				Username: "starter",
+			},
+		},
+	}
+
+	err := telegramBot.handleStatusCommand(context.Background(), sender, update)
+	if err != nil {
+		t.Fatalf("handleStatusCommand returned error: %v", err)
+	}
+
+	if sender.text != "" {
+		t.Fatalf("text = %q, want empty reply", sender.text)
+	}
+
+	if logs.Len() != 0 {
+		t.Fatalf("logs = %q, want empty log output", logs.String())
+	}
 }
 
 type stubSender struct {
