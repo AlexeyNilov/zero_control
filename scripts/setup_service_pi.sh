@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-PI_HOST="${1:-${PI_HOST:-}}"
+PI_HOST="${1:-${PI_HOST:-zero-control.local}}"
 PI_USER="${2:-${PI_USER:-pi}}"
 REMOTE_APP_DIR="${3:-${REMOTE_APP_DIR:-/home/${PI_USER}/zero_control}}"
 SERVICE_NAME="${4:-${SERVICE_NAME}}"
