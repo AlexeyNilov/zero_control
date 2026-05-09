@@ -22,6 +22,16 @@ This note records the hardware and operating system used for the `zero_control` 
 - Boot filesystem: `505M` total, `432M` available, `15%` used
 - Root filesystem: `58G` total, `54G` available, `5%` used
 
+## MQTT broker
+
+- Broker: `Mosquitto`
+- Service: `mosquitto`
+- Status: installed and running
+- Listener: `127.0.0.1:1883`
+- Scope: local-only MQTT broker for integrating the bot and other services on the device
+
+The broker currently listens on loopback only, so clients must run on the Raspberry Pi itself or connect through a local tunnel/proxy. Exposing MQTT to the LAN or other networks should be a separate configuration decision with authentication enabled.
+
 ### OS release
 
 Captured from `/etc/os-release`:
