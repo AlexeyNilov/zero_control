@@ -86,7 +86,7 @@ func (b *Bot) Run(ctx context.Context) error {
 }
 
 func (b *Bot) sendStartupNotification(ctx context.Context) error {
-	return b.sendDeveloperNotification(ctx, b.router.StatusMessage(), "startup notification")
+	return b.sendDeveloperNotification(ctx, b.router.StatusMessage(ctx), "startup notification")
 }
 
 func (b *Bot) sendDeveloperNotification(ctx context.Context, text, notificationType string) error {

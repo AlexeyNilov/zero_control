@@ -28,4 +28,4 @@ This helps ensure requirements are:
 
 > **When** the bot encounters a critical runtime failure that prevents normal operation or requires manual intervention, **the system shall** post a failure notification to the Telegram chat identified by the `DEVELOPER_CHAT_ID` environment variable.
 
-> **When** the bot receives the `/status` command in a Telegram chat from a Telegram user ID listed in `AUTHORIZED_IDS`, **the system shall** reply in that chat with `zero_control is online`.
+> **When** the bot receives the `/status` command in a Telegram chat from a Telegram user ID listed in `AUTHORIZED_IDS`, **the system shall** reply in that chat with `zero_control is online` and the current LAN IP address when available.

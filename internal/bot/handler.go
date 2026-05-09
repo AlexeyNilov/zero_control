@@ -20,7 +20,7 @@ func handleStatus(ctx context.Context, sender messageSender, router Router, upda
 
 	_, err := sender.SendMessage(ctx, &tgbot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   router.StatusMessage(),
+		Text:   router.StatusMessage(ctx),
 	})
 	if err != nil {
 		return fmt.Errorf("send /status reply to chat %s: %w", strconv.FormatInt(update.Message.Chat.ID, 10), err)

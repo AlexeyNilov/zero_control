@@ -8,11 +8,11 @@ At its core, this project is about constraint as a design tool. A tiny machine, 
 
 The bot now uses a real `go-telegram/bot` polling adapter behind `internal/bot`.
 
-- On startup, after Telegram authentication succeeds, the bot logs successful startup and posts `zero_control is online` to the chat identified by `DEVELOPER_CHAT_ID`.
+- On startup, after Telegram authentication succeeds, the bot logs successful startup and posts `zero_control is online` with the current LAN IP address to the chat identified by `DEVELOPER_CHAT_ID`.
 - The bot reads `AUTHORIZED_IDS` at startup and treats it as the allowlist of Telegram user IDs allowed to interact with the bot.
 - Incoming Telegram messages from authorized users are logged with chat, sender, and message metadata, without recording message text.
 - Messages from users outside `AUTHORIZED_IDS` are ignored.
-- The `/status` command replies with `zero_control is online` only for authorized users.
+- The `/status` command replies with `zero_control is online` and the current LAN IP address only for authorized users.
 - Device control remains a separate boundary and is still not connected to Telegram commands yet.
 
 ## Project structure

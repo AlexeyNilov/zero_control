@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AlexeyNilov/zero_control/internal/config"
+	"github.com/AlexeyNilov/zero_control/internal/service"
 	tgbot "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -43,7 +44,7 @@ func TestRunSendsStartupNotificationToDeveloperChat(t *testing.T) {
 	runner := &stubRunner{}
 	telegramBot := &Bot{
 		logger:          log.New(&bytes.Buffer{}, "", 0),
-		router:          NewRouter(nil),
+		router:          NewRouter(service.New(stubDeviceStatus{status: "192.168.1.42"})),
 		api:             runner,
 		developerChatID: 12345,
 	}
@@ -61,8 +62,9 @@ func TestRunSendsStartupNotificationToDeveloperChat(t *testing.T) {
 		t.Fatalf("chatID = %d, want %d", runner.chatID, 12345)
 	}
 
-	if runner.text != "zero_control is online" {
-		t.Fatalf("text = %q, want %q", runner.text, "zero_control is online")
+	want := "zero_control is online\nip: 192.168.1.42"
+	if runner.text != want {
+		t.Fatalf("text = %q, want %q", runner.text, want)
 	}
 }
 
@@ -156,7 +158,7 @@ func TestStatusHandlerRepliesWithOnlineMessage(t *testing.T) {
 	logger := log.New(&logs, "", 0)
 	telegramBot := &Bot{
 		logger:        logger,
-		router:        NewRouter(nil),
+		router:        NewRouter(service.New(stubDeviceStatus{status: "192.168.1.42"})),
 		authorizedIDs: map[int64]struct{}{111: {}},
 	}
 
@@ -184,8 +186,9 @@ func TestStatusHandlerRepliesWithOnlineMessage(t *testing.T) {
 		t.Fatalf("chatID = %d, want %d", sender.chatID, 999)
 	}
 
-	if sender.text != "zero_control is online" {
-		t.Fatalf("text = %q, want %q", sender.text, "zero_control is online")
+	want := "zero_control is online\nip: 192.168.1.42"
+	if sender.text != want {
+		t.Fatalf("text = %q, want %q", sender.text, want)
 	}
 
 	logLine := logs.String()
@@ -236,11 +239,19 @@ type stubSender struct {
 	text   string
 }
 
+type stubDeviceStatus struct {
+	status string
+}
+
 type stubRunner struct {
 	started int
 	chatID  int64
 	text    string
 	sendErr error
+}
+
+func (s stubDeviceStatus) Status(context.Context) (string, error) {
+	return s.status, nil
 }
 
 func (s *stubRunner) Start(context.Context) {
