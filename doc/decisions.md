@@ -68,3 +68,15 @@ Use a lightweight Architecture Decision Record (ADR) style:
 **Alternatives considered:** Adding local fake-server integration tests would improve confidence in the Telegram adapter boundary, but it would add design and test harness complexity that is disproportionate to the current project value. Running smoke tests against the real Telegram API would be closer to production, but it would introduce environment dependence, credentials handling, and flakiness.
 
 **Consequences:** This keeps the codebase and workflow simpler in the short term and avoids spending effort on infrastructure that is not yet justified. The trade-off is weaker automated coverage at the Telegram boundary, so some integration failures may only be discovered during actual bot use. This decision should be revisited if the bot starts handling more important commands or side effects.
+
+### 2026-05-09: Subscribe to one MQTT notification topic with Paho
+
+**Status:** Accepted
+
+**Context:** The bot needs only one MQTT-to-Telegram flow: messages published to `zero-control/notify` should become Telegram notifications in the main chat. The target device already runs Mosquitto, and the current need does not require MQTT publishing, topic routing, authentication, or MQTT v5-specific features.
+
+**Decision:** Use Eclipse Paho as the MQTT client behind a small `internal/mqtt` subscriber for the single `zero-control/notify` topic. The broker URL is configurable through `MQTT_BROKER_URL` and defaults to `tcp://localhost:1883`. Notifications are delivered to `MAIN_CHAT_ID`, separate from `DEVELOPER_CHAT_ID`.
+
+**Alternatives considered:** A minimal in-project MQTT 3.1.1 TCP subscriber would avoid a dependency, but MQTT protocol behavior, reconnect handling, and future TLS/auth requirements are easy places to introduce subtle bugs. Paho is a maintained library and is a better fit even for this small adapter.
+
+**Consequences:** The project takes on one focused MQTT dependency while keeping MQTT behavior behind a small internal interface. This reduces protocol maintenance risk and leaves room for TLS, authentication, or broader broker behavior later without changing the Telegram-facing flow.

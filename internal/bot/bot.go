@@ -18,6 +18,7 @@ type Bot struct {
 	router          Router
 	api             telegramRunner
 	developerChatID int64
+	mainChatID      int64
 	authorizedIDs   map[int64]struct{}
 }
 
@@ -72,6 +73,7 @@ func New(cfg config.Config, logger *log.Logger, control *service.ControlService)
 		router:          router,
 		api:             client,
 		developerChatID: cfg.DeveloperChatID,
+		mainChatID:      cfg.MainChatID,
 		authorizedIDs:   cfg.AuthorizedIDs,
 	}, nil
 }
@@ -89,13 +91,21 @@ func (b *Bot) sendStartupNotification(ctx context.Context) error {
 	return b.sendDeveloperNotification(ctx, b.router.StatusMessage(ctx), "startup notification")
 }
 
+func (b *Bot) NotifyMainChat(ctx context.Context, text string) error {
+	return b.sendNotification(ctx, b.mainChatID, text, "main chat notification")
+}
+
 func (b *Bot) sendDeveloperNotification(ctx context.Context, text, notificationType string) error {
+	return b.sendNotification(ctx, b.developerChatID, text, notificationType)
+}
+
+func (b *Bot) sendNotification(ctx context.Context, chatID int64, text, notificationType string) error {
 	_, err := b.api.SendMessage(ctx, &tgbot.SendMessageParams{
-		ChatID: b.developerChatID,
+		ChatID: chatID,
 		Text:   text,
 	})
 	if err != nil {
-		return fmt.Errorf("send %s to chat %s: %w", notificationType, strconv.FormatInt(b.developerChatID, 10), err)
+		return fmt.Errorf("send %s to chat %s: %w", notificationType, strconv.FormatInt(chatID, 10), err)
 	}
 
 	return nil

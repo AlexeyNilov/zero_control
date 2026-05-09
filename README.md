@@ -9,6 +9,8 @@ At its core, this project is about constraint as a design tool. A tiny machine, 
 The bot now uses a real `go-telegram/bot` polling adapter behind `internal/bot`.
 
 - On startup, after Telegram authentication succeeds, the bot logs successful startup and posts `zero_control is online` with the current LAN IP address to the chat identified by `DEVELOPER_CHAT_ID`.
+- On startup, the bot subscribes to the Mosquitto topic `zero-control/notify` using the broker identified by `MQTT_BROKER_URL`, defaulting to `tcp://localhost:1883`.
+- When a message is published to `zero-control/notify`, the bot sends the payload text directly to the Telegram chat identified by `MAIN_CHAT_ID`.
 - The bot reads `AUTHORIZED_IDS` at startup and treats it as the allowlist of Telegram user IDs allowed to interact with the bot.
 - Incoming Telegram messages from authorized users are logged with chat, sender, and message metadata, without recording message text.
 - Messages from users outside `AUTHORIZED_IDS` are ignored.
@@ -34,6 +36,7 @@ zero_control/
 |   |-- config/
 |   |-- device/
 |   |-- logging/
+|   |-- mqtt/
 |   `-- service/
 |-- scripts/
 |   |-- build_arm.sh
@@ -54,6 +57,7 @@ zero_control/
 - `cmd/zero_control/main.go` is the application entry point and keeps startup wiring out of the business logic.
 - `internal/config` loads and validates runtime configuration such as the bot token, developer chat ID, and authorized Telegram user IDs.
 - `internal/bot` holds the Telegram polling adapter, handlers, routing, and middleware.
+- `internal/mqtt` subscribes to the single `zero-control/notify` topic and forwards notification payloads to Telegram.
 - `internal/service` contains application use cases and orchestration logic.
 - `internal/device` is reserved for Raspberry Pi and OS-facing operations.
 - `internal/app` composes the application and coordinates startup.

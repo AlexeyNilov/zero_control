@@ -11,12 +11,15 @@ import (
 )
 
 const defaultPollTimeout = 30 * time.Second
+const defaultMQTTBrokerURL = "tcp://localhost:1883"
 
 type Config struct {
 	BotToken        string
 	DeveloperChatID int64
+	MainChatID      int64
 	AuthorizedIDs   map[int64]struct{}
 	PollTimeout     time.Duration
+	MQTTBrokerURL   string
 }
 
 func Load(dir string) (Config, error) {
@@ -30,7 +33,12 @@ func Load(dir string) (Config, error) {
 		return Config{}, errors.New("BOT_TOKEN is required")
 	}
 
-	developerChatID, err := parseChatID(firstNonEmpty(os.Getenv("DEVELOPER_CHAT_ID"), values["DEVELOPER_CHAT_ID"]))
+	developerChatID, err := parseChatID("DEVELOPER_CHAT_ID", firstNonEmpty(os.Getenv("DEVELOPER_CHAT_ID"), values["DEVELOPER_CHAT_ID"]))
+	if err != nil {
+		return Config{}, err
+	}
+
+	mainChatID, err := parseChatID("MAIN_CHAT_ID", firstNonEmpty(os.Getenv("MAIN_CHAT_ID"), values["MAIN_CHAT_ID"]))
 	if err != nil {
 		return Config{}, err
 	}
@@ -43,19 +51,21 @@ func Load(dir string) (Config, error) {
 	return Config{
 		BotToken:        token,
 		DeveloperChatID: developerChatID,
+		MainChatID:      mainChatID,
 		AuthorizedIDs:   authorizedIDs,
 		PollTimeout:     defaultPollTimeout,
+		MQTTBrokerURL:   firstNonEmpty(os.Getenv("MQTT_BROKER_URL"), values["MQTT_BROKER_URL"], defaultMQTTBrokerURL),
 	}, nil
 }
 
-func parseChatID(value string) (int64, error) {
+func parseChatID(name, value string) (int64, error) {
 	if value == "" {
-		return 0, errors.New("DEVELOPER_CHAT_ID is required")
+		return 0, fmt.Errorf("%s is required", name)
 	}
 
 	chatID, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("DEVELOPER_CHAT_ID must be a valid integer: %w", err)
+		return 0, fmt.Errorf("%s must be a valid integer: %w", name, err)
 	}
 
 	return chatID, nil

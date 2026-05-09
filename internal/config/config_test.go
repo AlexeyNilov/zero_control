@@ -10,7 +10,7 @@ import (
 
 func TestLoadReadsBotTokenFromDotEnvFile(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nAUTHORIZED_IDS=11, 22\n")
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nMAIN_CHAT_ID=67890\nAUTHORIZED_IDS=11, 22\n")
 
 	cfg, err := config.Load(dir)
 	if err != nil {
@@ -25,6 +25,10 @@ func TestLoadReadsBotTokenFromDotEnvFile(t *testing.T) {
 		t.Fatalf("DeveloperChatID = %d, want %d", cfg.DeveloperChatID, 12345)
 	}
 
+	if cfg.MainChatID != 67890 {
+		t.Fatalf("MainChatID = %d, want %d", cfg.MainChatID, 67890)
+	}
+
 	if !containsAuthorizedID(cfg.AuthorizedIDs, 11) {
 		t.Fatal("AuthorizedIDs does not contain 11")
 	}
@@ -32,11 +36,29 @@ func TestLoadReadsBotTokenFromDotEnvFile(t *testing.T) {
 	if !containsAuthorizedID(cfg.AuthorizedIDs, 22) {
 		t.Fatal("AuthorizedIDs does not contain 22")
 	}
+
+	if cfg.MQTTBrokerURL != "tcp://localhost:1883" {
+		t.Fatalf("MQTTBrokerURL = %q, want %q", cfg.MQTTBrokerURL, "tcp://localhost:1883")
+	}
+}
+
+func TestLoadReadsMQTTBrokerURLFromDotEnvFile(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nMAIN_CHAT_ID=67890\nAUTHORIZED_IDS=11\nMQTT_BROKER_URL=tcp://broker.local:1883\n")
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	if cfg.MQTTBrokerURL != "tcp://broker.local:1883" {
+		t.Fatalf("MQTTBrokerURL = %q, want %q", cfg.MQTTBrokerURL, "tcp://broker.local:1883")
+	}
 }
 
 func TestLoadReturnsErrorWhenBotTokenIsMissing(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, ".env"), "DEVELOPER_CHAT_ID=12345\n")
+	writeFile(t, filepath.Join(dir, ".env"), "DEVELOPER_CHAT_ID=12345\nMAIN_CHAT_ID=67890\n")
 
 	_, err := config.Load(dir)
 	if err == nil {
@@ -46,7 +68,7 @@ func TestLoadReturnsErrorWhenBotTokenIsMissing(t *testing.T) {
 
 func TestLoadReturnsErrorWhenDeveloperChatIDIsMissing(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nAUTHORIZED_IDS=11\n")
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nMAIN_CHAT_ID=67890\nAUTHORIZED_IDS=11\n")
 
 	_, err := config.Load(dir)
 	if err == nil {
@@ -56,7 +78,7 @@ func TestLoadReturnsErrorWhenDeveloperChatIDIsMissing(t *testing.T) {
 
 func TestLoadReturnsErrorWhenDeveloperChatIDIsInvalid(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=abc\nAUTHORIZED_IDS=11\n")
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=abc\nMAIN_CHAT_ID=67890\nAUTHORIZED_IDS=11\n")
 
 	_, err := config.Load(dir)
 	if err == nil {
@@ -64,9 +86,29 @@ func TestLoadReturnsErrorWhenDeveloperChatIDIsInvalid(t *testing.T) {
 	}
 }
 
+func TestLoadReturnsErrorWhenMainChatIDIsMissing(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nAUTHORIZED_IDS=11\n")
+
+	_, err := config.Load(dir)
+	if err == nil {
+		t.Fatal("Load returned nil error, want missing main chat id error")
+	}
+}
+
+func TestLoadReturnsErrorWhenMainChatIDIsInvalid(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nMAIN_CHAT_ID=nope\nAUTHORIZED_IDS=11\n")
+
+	_, err := config.Load(dir)
+	if err == nil {
+		t.Fatal("Load returned nil error, want invalid main chat id error")
+	}
+}
+
 func TestLoadReturnsErrorWhenAuthorizedIDsAreMissing(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\n")
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nMAIN_CHAT_ID=67890\n")
 
 	_, err := config.Load(dir)
 	if err == nil {
@@ -76,7 +118,7 @@ func TestLoadReturnsErrorWhenAuthorizedIDsAreMissing(t *testing.T) {
 
 func TestLoadReturnsErrorWhenAuthorizedIDsContainInvalidValue(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nAUTHORIZED_IDS=11,nope\n")
+	writeFile(t, filepath.Join(dir, ".env"), "BOT_TOKEN=test-token\nDEVELOPER_CHAT_ID=12345\nMAIN_CHAT_ID=67890\nAUTHORIZED_IDS=11,nope\n")
 
 	_, err := config.Load(dir)
 	if err == nil {

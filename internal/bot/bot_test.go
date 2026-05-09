@@ -68,6 +68,42 @@ func TestRunSendsStartupNotificationToDeveloperChat(t *testing.T) {
 	}
 }
 
+func TestNotifyMainChatSendsNotificationToMainChat(t *testing.T) {
+	runner := &stubRunner{}
+	telegramBot := &Bot{
+		api:        runner,
+		mainChatID: 67890,
+	}
+
+	err := telegramBot.NotifyMainChat(context.Background(), "door opened")
+	if err != nil {
+		t.Fatalf("NotifyMainChat returned error: %v", err)
+	}
+
+	if runner.chatID != 67890 {
+		t.Fatalf("chatID = %d, want %d", runner.chatID, 67890)
+	}
+
+	if runner.text != "door opened" {
+		t.Fatalf("text = %q, want %q", runner.text, "door opened")
+	}
+}
+
+func TestNotifyMainChatReturnsErrorWhenNotificationCannotBeSent(t *testing.T) {
+	runner := &stubRunner{sendErr: errors.New("send failed")}
+	telegramBot := &Bot{
+		api:        runner,
+		mainChatID: 67890,
+	}
+
+	err := telegramBot.NotifyMainChat(context.Background(), "door opened")
+	if err == nil {
+		t.Fatal("NotifyMainChat returned nil error, want send error")
+	}
+
+	assertContains(t, err.Error(), "send main chat notification")
+}
+
 func TestRunReturnsErrorWhenStartupNotificationCannotBeSent(t *testing.T) {
 	runner := &stubRunner{sendErr: errors.New("send failed")}
 	telegramBot := &Bot{
