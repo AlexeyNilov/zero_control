@@ -48,6 +48,7 @@ User=${PI_USER}
 Group=${PI_USER}
 WorkingDirectory=${REMOTE_APP_DIR}
 EnvironmentFile=${REMOTE_ENV_PATH}
+ExecStartPre=/bin/sh -c 'for i in \$(seq 1 30); do getent hosts api.telegram.org >/dev/null && exit 0; sleep 2; done; exit 1'
 ExecStart=${REMOTE_BIN_PATH}
 Restart=on-failure
 RestartSec=5
