@@ -51,6 +51,8 @@ func (s *Subscriber) forwardNotification(ctx context.Context, payload []byte) {
 		return
 	}
 
+	s.logger.Printf("received mqtt notification bytes=%d", len(payload))
+
 	if err := s.notifier.NotifyMainChat(ctx, text); err != nil {
 		s.logger.Printf("mqtt notification delivery error: %v", err)
 	}

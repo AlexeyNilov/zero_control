@@ -34,6 +34,29 @@ func TestSubscriberSubscribesToNotifyTopicAndForwardsPayloadToMainChat(t *testin
 	}
 }
 
+func TestSubscriberLogsReceivedNotificationWithoutPayloadText(t *testing.T) {
+	var logs bytes.Buffer
+	client := &stubClient{}
+	notifier := &stubNotifier{}
+	subscriber := NewSubscriber(client, notifier, log.New(&logs, "", 0))
+
+	err := subscriber.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start returned error: %v", err)
+	}
+
+	client.handler([]byte("garage door opened"))
+
+	logLine := logs.String()
+	if !strings.Contains(logLine, "received mqtt notification bytes=18") {
+		t.Fatalf("logs = %q, want brief mqtt receipt log", logLine)
+	}
+
+	if strings.Contains(logLine, "garage door opened") {
+		t.Fatalf("logs = %q, want payload text omitted", logLine)
+	}
+}
+
 func TestSubscriberReturnsErrorWhenTopicSubscriptionFails(t *testing.T) {
 	client := &stubClient{subscribeErr: errors.New("subscribe failed")}
 	notifier := &stubNotifier{}
