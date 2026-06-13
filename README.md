@@ -9,7 +9,7 @@ At its core, this project is about constraint as a design tool. A tiny machine, 
 The bot now uses a real `go-telegram/bot` polling adapter behind `internal/bot`.
 
 - On startup, after Telegram authentication succeeds, the bot logs successful startup and posts `zero_control is online` with the current LAN IP address to the chat identified by `DEVELOPER_CHAT_ID`.
-- On startup, the bot subscribes to the Mosquitto topic `zero-control/notify` using the broker identified by `MQTT_BROKER_URL`, defaulting to `tcp://localhost:1883`.
+- On startup, the bot subscribes to the Mosquitto topic `zero-control/notify` using the broker identified by `MQTT_BROKER_URL`, defaulting to `tcp://localhost:1883`. If the broker connection is lost and later restored, the bot re-subscribes to the topic.
 - When a message is published to `zero-control/notify`, the bot sends the payload text directly to the Telegram chat identified by `MAIN_CHAT_ID`.
 - The bot reads `AUTHORIZED_IDS` at startup and treats it as the allowlist of Telegram user IDs allowed to interact with the bot.
 - Incoming Telegram messages from authorized users are logged with chat, sender, and message metadata, without recording message text.
